@@ -45,7 +45,8 @@ def get_argv(arguments):
     settings = {"maxth": 10,
                 "del_old_ios": False,
                 "squeeze": False,
-                "copy": False}
+                "copy": False,
+                "del4": False}
 
     for arg in arguments:
         if arg.startswith("mt"):
@@ -56,6 +57,8 @@ def get_argv(arguments):
             settings["squeeze"] = True
         elif arg == "copy":
             settings["copy"] = True
+        elif arg == "del4":
+            settings["del4"] = True    
         elif arg == "all":
             settings["del_old_ios"] = True
             settings["squeeze"] = True
@@ -65,7 +68,8 @@ def get_argv(arguments):
     print(f"max threads:...................{settings['maxth']}\n"
           f"delete old IOS:................{settings['del_old_ios']}\n"
           f"squeeze FLASH:.................{settings['squeeze']}\n"
-          f"copy IOS, save BOOT:...........{settings['copy']}\n")
+          f"copy IOS, save BOOT:...........{settings['copy']}\n"
+          f"delete 15.4(3)S4:..............{settings['del4']}\n")
 
     return settings
 
@@ -152,6 +156,25 @@ def controller(dev, connection):
         for i in show_controller.splitlines():
             if "vendor_name" in i and "CISCO" in i:
                 dev.vender_cisco = True
+
+
+def delete_old_ios_1543s4(dev, connection, settings):
+    if settings["del4"]:
+        version = connection.send_command(r"show version | include Software")
+        new_ios = ["asr901-universalk9-mz.154-3.S4.bin", "asr901-universalk9-mz.156-2.SP7.bin"]
+        if all([ios in dev.ios_list for ios in new_ios]):
+            if "Version 15.6(2)SP7" in version:
+                dev.logging.append(connection.send_command(f"delete flash:asr901-universalk9-mz.154-3.S4.bin",
+                                                           expect_string=r"Delete filename",
+                                                           strip_command=False, strip_prompt=False))
+                dev.logging.append(connection.send_command("", expect_string=r"confirm",
+                                                           strip_command=False, strip_prompt=False))
+                dev.logging.append(connection.send_command("", expect_string=r"#",
+                                                           strip_command=False, strip_prompt=False))
+            else:
+                print(f"{dev.hostname:25}{dev.ip_address:17}ios version is not 15.6(2)SP7")
+        else:
+            print(f"{dev.hostname:25}{dev.ip_address:17}{new_ios} are not in flash memory")
 
 
 def delete_old_ios(dev, connection, settings):
