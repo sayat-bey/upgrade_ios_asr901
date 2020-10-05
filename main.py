@@ -65,7 +65,7 @@ def get_argv(arguments):
     print(f"max threads:...................{settings['maxth']}\n"
           f"delete old IOS:................{settings['del_old_ios']}\n"
           f"squeeze FLASH:.................{settings['squeeze']}\n"
-          f"copy IOS, save BOOT:...........{settings['copy']}")
+          f"copy IOS, save BOOT:...........{settings['copy']}\n")
 
     return settings
 
