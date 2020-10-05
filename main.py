@@ -270,6 +270,7 @@ def connect_dev(my_username, my_password, dev_queue, settings):
                 show_commands(dev, ssh_conn)
                 controller(dev, ssh_conn)
                 delete_old_ios(dev, ssh_conn, settings)
+                delete_old_ios_1543s4(dev, ssh_conn, settings)
 
                 ssh_conn.disconnect()
                 dev_queue.task_done()
