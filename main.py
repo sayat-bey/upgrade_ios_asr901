@@ -101,15 +101,15 @@ def write_logs(devs):
     current_date = timenow.strftime("%Y.%m.%d")
     current_time = timenow.strftime("%H.%M.%S")
 
-    folder = f"logs\\{current_date}"
+    folder = f"logs/{current_date}"
 
     if not os.path.exists(folder):
         os.mkdir(folder)
 
-    err_msg_file = open(f"{folder}\\{current_time}_connection_error_msg.txt", "w")
+    err_msg_file = open(f"{folder}/{current_time}_connection_error_msg.txt", "w")
     err_msg_file.write(f"{current_date} {current_time}\n\n")
 
-    log_file = open(f"{folder}\\{current_time}_logs.txt", "w")
+    log_file = open(f"{folder}/{current_time}_logs.txt", "w")
     log_file.write(f"{current_date} {current_time}\n\n")
 
     for dev in devs:
