@@ -2,11 +2,12 @@ import yaml
 import time
 import os
 import queue
+import math
 from pprint import pformat
 from threading import Thread
 from getpass import getpass
 from sys import argv
-from datetime import datetime
+from datetime import datetime, timedelta
 from netmiko import ConnectHandler
 from netmiko.ssh_exception import NetMikoTimeoutException
 
@@ -151,6 +152,16 @@ def write_logs(devs):
 #######################################################################################
 # ------------------------------ def         -----------------------------------------#
 #######################################################################################
+
+
+def count_duration(dev_number, threads, start):
+    squeeze = 17
+    copy = 6
+    rounds = math.ceil(dev_number/threads)
+    duration_time = (squeeze+copy)*rounds
+
+    endtime = start + timedelta(minutes=duration_time)
+    print(f'approximate duration: {duration_time} minutes, end time: {endtime.strftime("%Y.%m.%d %H:%M:%S")}')
 
 
 def show_commands(dev, connection):
@@ -342,7 +353,9 @@ devices = get_devinfo()
 total_devices = len(devices)
 q = queue.Queue()
 
+count_duration(total_devices, argv_dict["maxth"], starttime)
 
+print()
 print("-------------------------------------------------------------------------------------------------------")
 print("hostname                 ip address       comment")
 print("-------------------------------------------------------------------------------------------------------")
