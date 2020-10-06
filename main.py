@@ -2,6 +2,7 @@ import yaml
 import time
 import os
 import queue
+from pprint import pformat
 from threading import Thread
 from getpass import getpass
 from sys import argv
@@ -27,6 +28,8 @@ class CellSiteGateway:
         self.ios_list = []
         self.logging = []
         self.vender_cisco = False
+        self.error = False
+        self.error_msg = []
 
     def reset(self):
         self.connection_status = True  # failed connection status, False if connection fails
@@ -35,6 +38,8 @@ class CellSiteGateway:
         self.ios_list = []
         self.logging = []
         self.vender_cisco = False
+        self.error = False
+        self.error_msg = []
         
 
 #######################################################################################
@@ -42,7 +47,7 @@ class CellSiteGateway:
 #######################################################################################
 
 def get_argv(arguments):
-    settings = {"maxth": 10,
+    settings = {"maxth": 20,
                 "del_old_ios": False,
                 "squeeze": False,
                 "copy": False,
@@ -96,7 +101,8 @@ def get_devinfo():
 def write_logs(devs):
     
     failed_connection = 0
-    
+    errors = 0
+
     timenow = datetime.now()
     current_date = timenow.strftime("%Y.%m.%d")
     current_time = timenow.strftime("%H.%M.%S")
@@ -112,6 +118,9 @@ def write_logs(devs):
     log_file = open(f"{folder}/{current_time}_logs.txt", "w")
     log_file.write(f"{current_date} {current_time}\n\n")
 
+    error_file = open(f"{folder}/{current_time}_error_logs.txt", "w")
+    error_file.write(f"{current_date} {current_time}\n\n")
+
     for dev in devs:
         if not dev.connection_status:
             failed_connection += 1
@@ -125,10 +134,18 @@ def write_logs(devs):
             log_file.write("".join(dev.logging))
             log_file.write("\n\n")
 
+        if dev.error:
+            errors += 1
+            error_file.write("-" * 80 + "\n")
+            error_file.write(f"{dev.hostname} : {dev.ip_address}\n\n")
+            error_file.write(pformat(dev.error_msg))
+            error_file.write("\n\n")
+
     err_msg_file.close()
     log_file.close()
+    error_file.close()
 
-    return failed_connection
+    return failed_connection, errors
 
 
 #######################################################################################
@@ -196,7 +213,9 @@ def delete_old_ios(dev, connection, settings):
         else:
             print(f"{dev.hostname:25}{dev.ip_address:17}old ios left: {old_ios}")
     if not left_ios:
-        print(f"{dev.hostname:25}{dev.ip_address:17}no new ios left")
+        print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] no new ios left")
+        dev.error = True
+        dev.error_msg.append("no new ios left")
 
     if settings["squeeze"]:
         squeeze_start = datetime.now()
@@ -209,7 +228,9 @@ def delete_old_ios(dev, connection, settings):
         if "Squeeze of flash complete" in squeeze_log:
             print(f"{dev.hostname:25}{dev.ip_address:17}squeeze complete, duration: {squeeze_duration}")
         else:
-            print(f"{dev.hostname:25}{dev.ip_address:17}squeeze error")
+            print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] squeeze error")
+            dev.error = True
+            dev.error_msg.append("squeeze error")
 
     if settings["copy"]:
         if dev.vender_cisco:
@@ -232,7 +253,9 @@ def delete_old_ios(dev, connection, settings):
                                                                strip_command=False, strip_prompt=False,
                                                                delay_factor=15))
                 else:
-                    print(f"{dev.hostname:25}{dev.ip_address:17}no free space: {free_space}")
+                    print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] no free space: {free_space}")
+                    dev.error = True
+                    dev.error_msg.append(f"no free space: {free_space}")
 
             md5_log = connection.send_command("verify /md5 asr901-universalk9-mz.156-2.SP7.bin",
                                               strip_command=False, strip_prompt=False,
@@ -247,10 +270,14 @@ def delete_old_ios(dev, connection, settings):
                 print(f"{dev.hostname:25}{dev.ip_address:17}md5 checksum is ok, new boot is configured, "
                       f"duration: {copy_duration}")
             else:
-                print(f"{dev.hostname:25}{dev.ip_address:17}md5 checksum failed")
+                print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] md5 checksum failed")
+                dev.error = True
+                dev.error_msg.append("md5 checksum failed")
 
         else:
-            print(f"{dev.hostname:25}{dev.ip_address:17}uplink sfp transceiver vender is not cisco")
+            print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] uplink sfp transceiver vender is not cisco")
+            dev.error = True
+            dev.error_msg.append("uplink sfp transceiver vender is not cisco")
 
 #######################################################################################
 # ------------------------------ multithreading part ---------------------------------#
@@ -331,11 +358,12 @@ for device in devices:
 
 q.join()
 
-failed_connection_count = write_logs(devices)
+failed_connection_count, errors_count = write_logs(devices)
 duration = datetime.now() - starttime
 
 print()
 print("-------------------------------------------------------------------------------------------------------")
-print(f"failed connection: {failed_connection_count}  total device number: {total_devices}")
+print(f"total device number: {total_devices}")
+print(f"failed connection: {failed_connection_count}  errors: {errors_count}")
 print(f"elapsed time: {duration}")
 print("-------------------------------------------------------------------------------------------------------\n")
