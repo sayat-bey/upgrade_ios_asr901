@@ -157,8 +157,9 @@ def write_logs(devs):
 def count_duration(dev_number, threads, start):
     squeeze = 17
     copy = 6
+    additional_time = 1
     rounds = math.ceil(dev_number/threads)
-    duration_time = (squeeze+copy)*rounds
+    duration_time = (squeeze + copy) * rounds + additional_time
 
     endtime = start + timedelta(minutes=duration_time)
     print(f'approximate duration: {duration_time} minutes, end time: {endtime.strftime("%Y.%m.%d %H:%M:%S")}')
