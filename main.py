@@ -29,6 +29,7 @@ class CellSiteGateway:
         self.ios_list = []
         self.logging = []
         self.vender_cisco = False
+        self.vender = []
         self.error = False
         self.error_msg = []
 
@@ -39,6 +40,7 @@ class CellSiteGateway:
         self.ios_list = []
         self.logging = []
         self.vender_cisco = False
+        self.vender = []
         self.error = False
         self.error_msg = []
         
@@ -122,6 +124,9 @@ def write_logs(devs):
     error_file = open(f"{folder}/{current_time}_error_logs.txt", "w")
     error_file.write(f"{current_date} {current_time}\n\n")
 
+    vendor_file = open(f"{folder}/{current_time}_sfp_vendor.txt", "w")
+    vendor_file.write(f"{current_date} {current_time}\n\n")
+
     for dev in devs:
         if not dev.connection_status:
             failed_connection += 1
@@ -135,6 +140,8 @@ def write_logs(devs):
             log_file.write("".join(dev.logging))
             log_file.write("\n\n")
 
+            vendor_file.write(f"{dev.hostname} : {dev.ip_address}\t{pformat(dev.vendor)}\n")
+
         if dev.error:
             errors += 1
             error_file.write("-" * 80 + "\n")
@@ -145,6 +152,7 @@ def write_logs(devs):
     err_msg_file.close()
     log_file.close()
     error_file.close()
+    vendor_file.close()
 
     return failed_connection, errors
 
@@ -183,8 +191,10 @@ def controller(dev, connection):
     for port in ports:
         show_controller = connection.send_command(f"show controllers {port} | include vendor_name")
         for i in show_controller.splitlines():
-            if "vendor_name" in i and "CISCO" in i:
-                dev.vender_cisco = True
+            if "vendor_name" in i:
+                dev.vender.append(i.split()[-1])
+                if "CISCO" in i:
+                    dev.vender_cisco = True
 
 
 def delete_old_ios_1543s4(dev, connection, settings):
