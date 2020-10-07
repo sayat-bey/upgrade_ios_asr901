@@ -28,8 +28,8 @@ class CellSiteGateway:
 
         self.ios_list = []
         self.logging = []
-        self.vender_cisco = False
-        self.vender = []
+        self.vendor_cisco = False
+        self.vendor = []
         self.error = False
         self.error_msg = []
 
@@ -39,8 +39,8 @@ class CellSiteGateway:
 
         self.ios_list = []
         self.logging = []
-        self.vender_cisco = False
-        self.vender = []
+        self.vendor_cisco = False
+        self.vendor = []
         self.error = False
         self.error_msg = []
         
@@ -192,9 +192,9 @@ def controller(dev, connection):
         show_controller = connection.send_command(f"show controllers {port} | include vendor_name")
         for i in show_controller.splitlines():
             if "vendor_name" in i:
-                dev.vender.append(i.split()[-1])
+                dev.vendor.append(i.split()[-1])
                 if "CISCO" in i:
-                    dev.vender_cisco = True
+                    dev.vendor_cisco = True
 
 
 def delete_old_ios_1543s4(dev, connection, settings):
@@ -255,7 +255,7 @@ def delete_old_ios(dev, connection, settings):
             dev.error_msg.append("squeeze error")
 
     if settings["copy"]:
-        if dev.vender_cisco:
+        if dev.vendor_cisco:
             copy_start = datetime.now()
             dirflash_free = connection.send_command(r"dir flash: | in free")
             free_space = 0
@@ -297,9 +297,9 @@ def delete_old_ios(dev, connection, settings):
                 dev.error_msg.append("md5 checksum failed")
 
         else:
-            print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] uplink sfp transceiver vender is not cisco")
+            print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] uplink sfp transceiver vendor is not cisco")
             dev.error = True
-            dev.error_msg.append("uplink sfp transceiver vender is not cisco")
+            dev.error_msg.append("uplink sfp transceiver vendor is not cisco")
 
 #######################################################################################
 # ------------------------------ multithreading part ---------------------------------#
