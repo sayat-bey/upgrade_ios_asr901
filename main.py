@@ -287,6 +287,9 @@ def delete_old_ios(dev, connection, settings):
             if "5981f0cc5a76b85a7c6643d0d2b7470a" in md5_log:
                 new_boot = ["no boot system", "boot system flash asr901-universalk9-mz.156-2.SP7.bin"]
                 dev.logging.append(connection.send_config_set(new_boot, strip_command=False, strip_prompt=False))
+                dev.logging.append(connection.save_config())
+
+                '''
                 try:
                     dev.logging.append(connection.save_config())
                 except IOError as commit_msg:
@@ -299,6 +302,7 @@ def delete_old_ios(dev, connection, settings):
                     print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] commit error: {commit_msg_2}")
                     dev.error = True
                     dev.error_msg.append("commit error")
+                '''
 
                 copy_duration = datetime.now() - copy_start
                 print(f"{dev.hostname:25}{dev.ip_address:17}md5 checksum is ok, new boot is configured, "
