@@ -363,7 +363,7 @@ def connect_dev(my_username, my_password, dev_queue, settings):
                 else:
                     attempts -= 1
                     dev.reset()
-                    print(f"{dev.hostname:25}{dev.ip_address:17}'connection failed attempt: {attempts}, {err_msg}")
+                    print(f"{dev.hostname:25}{dev.ip_address:17}connection failed, attempts left: {attempts}, {err_msg}")
                     time.sleep(5)
 
 
