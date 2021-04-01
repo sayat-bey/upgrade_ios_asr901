@@ -213,7 +213,7 @@ def delete_old_ios_1543s4(dev, connection, settings):
             else:
                 print(f"{dev.hostname:25}{dev.ip_address:17}ios version is not 15.6(2)SP7")
         else:
-            print(f"{dev.hostname:25}{dev.ip_address:17}{new_ios} are not in flash memory")
+            print(f"{dev.hostname:25}{dev.ip_address:17}no old ios in flash, ios in flash: {dev.ios_list}")
 
 
 def delete_old_ios(dev, connection, settings):
