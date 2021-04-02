@@ -210,6 +210,19 @@ def delete_old_ios_1543s4(dev, connection, settings):
                                                            strip_command=False, strip_prompt=False))
                 dev.logging.append(connection.send_command("", expect_string=r"#",
                                                            strip_command=False, strip_prompt=False))
+                
+                dev.logging.append(connection.send_command("squeeze flash:", expect_string=r"confirm",
+                                                           strip_command=False, strip_prompt=False))
+                squeeze_log = connection.send_command("", expect_string=r"#", delay_factor=15,
+                                                      strip_command=False, strip_prompt=False)
+                dev.logging.append(squeeze_log)
+                if "Squeeze of flash complete" in squeeze_log:
+                    print(f"{dev.hostname:25}{dev.ip_address:17}15.4(3)S4 is deleted, squeeze complete")
+                else:
+                    print(f"{dev.hostname:25}{dev.ip_address:17}[ERROR] squeeze error")
+                    dev.error = True
+                    dev.error_msg.append("squeeze error")
+
             else:
                 print(f"{dev.hostname:25}{dev.ip_address:17}ios version is not 15.6(2)SP7")
         else:
