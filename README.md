@@ -1,5 +1,5 @@
 # Upgrade IOS on CISCO ASR901
-version 06.10.2020
+version 04.02.2023
 
 скрипт для:
 - удаления старых образов IOS с CSG
@@ -8,12 +8,7 @@ version 06.10.2020
 
 arguments:
 
-- **del**: delete old IOS, except 15.4(3)S4 and 15.6(2)SP7
-- **squeeze**: squeeze flash:
-- **copy**: copy 15.6(2)SP7, set boot, check MD5
-- **del4**: delete 15.4(3)S4 if current IOS is 15.6(2)SP7
-- **all**: del, squeeze, copy, except del4
-
+- **cfg**: cfg mode
 
 - список всех IOS
 - проверить SFP на UPLINK, вендор Cisco ?
@@ -24,3 +19,5 @@ arguments:
     - если нет проверить Free Space
     - скопировать
 - проверить на MD5
+- asr901-universalk9-mz.156-2.SP9.bin - основной
+- asr901-universalk9-mz.155-3.S10.bin - резервный, основной для PAGG XE
