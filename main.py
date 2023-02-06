@@ -55,13 +55,18 @@ class CellSiteGateway:
 
 def get_argv(arguments):
     settings = {"maxth": 20,
-                "cfg": False}
+                "cfg": False,
+                "force": False}
     for arg in arguments:
         if arg == "cfg":
             settings["cfg"] = True
+        elif arg == "force":
+            settings["force"] = True
+            settings["cfg"] = True
     print()
     print(f"max threads:...................{settings['maxth']}\n"
-          f"CFG mdoe:......................{settings['cfg']}")
+          f"CFG mdoe:......................{settings['cfg']}\n"
+          f"Force mdoe:....................{settings['force']}")
 
     return settings
 
@@ -361,8 +366,8 @@ def squeeze(dev, connection):
             dev.squeeze_result = False
 
 
-def copy(dev, connection):
-    if all(dev.sfp_vendor_cisco):
+def copy(dev, connection, settings):
+    if all(dev.sfp_vendor_cisco) or settings["force"]:
         dirflash_free = connection.send_command(r"dir flash: | in free", read_timeout=20)
         free_space = 0
         for line in dirflash_free.splitlines():
@@ -395,7 +400,7 @@ def check_md5(dev, connection):
     if dev.ios_copied:
         md5_log = connection.send_command(f"verify /md5 {dev.ios_copied}",
                                         strip_command=False, strip_prompt=False,
-                                        read_timeout=600)                           
+                                        read_timeout=1500)                           
         dev.logging.append(md5_log)
         if dev.md5 in md5_log:
             dev.md5_correct = True
@@ -408,10 +413,13 @@ def check_md5(dev, connection):
 def set_boot(dev, connection):
     if dev.md5_correct and dev.boot:
         new_boot = ["no boot system", f"boot system flash {dev.boot}"]
-        dev.logging.append(connection.send_config_set(new_boot,
-                                                    strip_command=False, strip_prompt=False,
-                                                    read_timeout=20))
-        dev.logging.append(connection.save_config())
+        dev.logging.append(connection.send_config_set(new_boot,strip_command=False, strip_prompt=False,
+                                                      read_timeout=20))
+        try:
+	        dev.logging.append(connection.save_config())
+        except Exception as err_msg:
+            dev.logging.append(f"COMMIT is OK after msg:{err_msg}")
+            dev.logging.append(connection.send_command("\n", expect_string=r"#"))
 
 
 def del_squeeze_copy(dev, connection, settings):
@@ -426,7 +434,7 @@ def del_squeeze_copy(dev, connection, settings):
     if settings["cfg"]:
         delete_ios(dev, connection)
         squeeze(dev, connection)
-        copy(dev, connection)
+        copy(dev, connection, settings)
         check_md5(dev, connection)
         set_boot(dev, connection)
         
@@ -438,7 +446,7 @@ def del_squeeze_copy(dev, connection, settings):
                                            f"{'':42}md5 correct:...................{dev.md5_correct}\n"
                                            f"{'':42}squeeze result:................{dev.squeeze_result}\n"
                                            f"{'':42}all sfp cisco:.................{all(dev.sfp_vendor_cisco)}/{dev.sfp_vendor}\n"
-                                           f"{'':42}delete files:..................{dev.delete_files}\n") 
+                                           f"{'':42}delete files:..................{dev.delete_files}") 
 
     else:
         print(f"{dev.hostname:25}{dev.ip_address:17}current ios:...................{dev.current_ios_short}\n"
@@ -449,7 +457,7 @@ def del_squeeze_copy(dev, connection, settings):
                                            f"{'':42}md5 correct:...................{dev.md5_correct}\n"
                                            f"{'':42}squeeze result:................{dev.squeeze_result}\n"
                                            f"{'':42}all sfp cisco:.................{all(dev.sfp_vendor_cisco)}/{dev.sfp_vendor}\n"
-                                           f"{'':42}delete files:..................{dev.delete_files}\n")       
+                                           f"{'':42}delete files:..................{dev.delete_files}")       
 
 
 #######################################################################################
@@ -459,7 +467,7 @@ def del_squeeze_copy(dev, connection, settings):
 def connect_dev(my_username, my_password, dev_queue, settings):
     while True:
         dev = dev_queue.get()
-        print(f"### Queue size: {dev_queue.qsize()} ###")
+        
         attempts = 1
         while True:
             try:

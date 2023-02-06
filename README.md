@@ -9,6 +9,8 @@ version 04.02.2023
 arguments:
 
 - **cfg**: cfg mode
+- **force**: force to copy
+
 
 - список всех IOS
 - проверить SFP на UPLINK, вендор Cisco ?
