@@ -47,6 +47,7 @@ class CellSiteGateway:
         self.squeeze_result = None
         self.current_boot = ""
         self.current_boot_short = None
+        self.check_squeeze = False
 
 
 #######################################################################################
@@ -250,6 +251,14 @@ def current_boot(dev, connection):
             dev.current_boot = i.split()[-1]
 
 
+def check_squeeze(dev, connection):
+    log = connection.send_command(f"dir /a", read_timeout=20)
+    for i in log.splitlines():
+        if "[" and "]" in i:
+            dev.check_squeeze = True
+            break
+
+
 def parse_lst(dev):
     if dev.pagg_xe:
         if dev.current_boot != "asr901-universalk9-mz.155-3.S10.bin":
@@ -348,7 +357,7 @@ def delete_ios(dev, connection):
 
 
 def squeeze(dev, connection):
-    if dev.ios_to_delete or dev.delete_files:
+    if dev.check_squeeze or dev.ios_to_delete or dev.delete_files:
         dev.logging.append(connection.send_command("squeeze flash:", expect_string=r"confirm",
                                                     strip_command=False, strip_prompt=False, 
                                                     read_timeout=20))
@@ -428,6 +437,7 @@ def del_squeeze_copy(dev, connection, settings):
     define_pagg_xe(dev, connection)
     current_ios(dev, connection)
     current_boot(dev, connection)
+    check_squeeze(dev, connection)
     parse_lst(dev)
     short_ios(dev)
 
